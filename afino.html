@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Afino?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1EEFB; --lane:#E7E2F8; --lane-in:#D8D0F3; --ink:#1D1A33; --muted:#665F91;
+  --ok:#1E9C76; --near:#B5840C; --off:#D04A47; --line:#C9C0EC; --btn:#1D1A33; --btn-ink:#F1EEFB;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1D1A33; --lane:#232040; --lane-in:#2F2A52; --ink:#EDE8FF; --muted:#9C95C8;
+    --ok:#6FD6B4; --near:#F2C14E; --off:#EF6F6C; --line:#3A3561; --btn:#EDE8FF; --btn-ink:#1D1A33;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1D1A33; --lane:#232040; --lane-in:#2F2A52; --ink:#EDE8FF; --muted:#9C95C8;
+  --ok:#6FD6B4; --near:#F2C14E; --off:#EF6F6C; --line:#3A3561; --btn:#EDE8FF; --btn-ink:#1D1A33;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.45}
+.wrap{max-width:720px;margin:0 auto;padding:20px 18px 36px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:1.6rem;font-weight:800;margin:0;letter-spacing:-.01em}
+.sub{margin:0;color:var(--muted);font-size:.95rem}
+
+.readout{margin-top:18px;display:grid;grid-template-columns:auto 1fr;gap:6px 22px;align-items:center}
+.note{font-size:clamp(4rem,18vw,7.5rem);font-weight:800;line-height:.9;letter-spacing:-.04em;
+  min-width:3.2ch;font-variant-numeric:tabular-nums;transition:color .15s}
+.note sub{font-size:.32em;font-weight:600;letter-spacing:0;vertical-align:baseline;margin-left:.05em}
+.note.ok{color:var(--ok)} .note.near{color:var(--near)} .note.off{color:var(--off)} .note.idle{color:var(--line)}
+.right{min-width:0}
+.meter{position:relative;height:38px;border-radius:19px;background:var(--lane);overflow:hidden}
+.zone{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);background:var(--lane-in);transition:width .2s}
+.center{position:absolute;top:6px;bottom:6px;left:50%;width:2px;margin-left:-1px;background:var(--line)}
+.needle{position:absolute;top:4px;bottom:4px;width:10px;margin-left:-5px;border-radius:5px;left:50%;
+  background:var(--line);transition:left .08s linear, background .15s}
+.needle.ok{background:var(--ok)} .needle.near{background:var(--near)} .needle.off{background:var(--off)}
+@media (prefers-reduced-motion: reduce){.needle,.zone,.note{transition:none}}
+.mlabels{display:flex;justify-content:space-between;color:var(--muted);font-size:.8rem;margin-top:4px}
+.status{margin:10px 0 0;font-size:1.05rem;min-height:2.9em}
+.cents{color:var(--muted);font-variant-numeric:tabular-nums}
+
+.rollbox{margin-top:16px;border-radius:14px;overflow:hidden;background:var(--lane)}
+canvas{display:block;width:100%;height:260px}
+@media (min-width:640px){canvas{height:320px}}
+
+.controls{margin-top:18px;display:grid;gap:14px}
+button{font:inherit;font-weight:600;font-size:1.05rem;padding:14px 18px;border:0;border-radius:12px;
+  background:var(--btn);color:var(--btn-ink);cursor:pointer}
+button.on{background:var(--off);color:#fff}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--ok);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:480px){.row{grid-template-columns:1fr}}
+label{display:grid;gap:6px;font-size:.9rem;color:var(--muted)}
+select,input[type=range]{font:inherit;color:var(--ink);width:100%}
+select{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+input[type=range]{accent-color:var(--ok)}
+output{color:var(--ink);font-weight:600}
+
+.stats{margin-top:20px;display:flex;gap:28px;flex-wrap:wrap}
+.stats b{display:block;font-size:2rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.stats span{color:var(--muted);font-size:.85rem}
+.reset{background:transparent;color:var(--muted);border:1px solid var(--line);padding:8px 12px;font-size:.85rem;align-self:center}
+
+details{margin-top:24px;border-top:1px solid var(--line);padding-top:14px}
+summary{cursor:pointer;font-weight:600}
+details p{max-width:62ch;color:var(--muted)}
+.err{color:var(--off);font-weight:600}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>¿Afino?</h1>
+    <p class="sub">Canta. El micro no juzga; los colores sí.</p>
+  </header>
+
+  <section class="readout" aria-live="polite">
+    <div class="note idle" id="note">—</div>
+    <div class="right">
+      <div class="meter" aria-hidden="true">
+        <div class="zone" id="zone"></div>
+        <div class="center"></div>
+        <div class="needle" id="needle"></div>
+      </div>
+      <div class="mlabels"><span>bajo</span><span class="cents" id="cents">0 cents</span><span>alto</span></div>
+    </div>
+  </section>
+  <p class="status" id="status">Pulsa «Empezar a escuchar» y canta lo que quieras. La ducha no cuenta como público.</p>
+
+  <div class="rollbox"><canvas id="roll" aria-label="Gráfico de tu tono en los últimos segundos"></canvas></div>
+
+  <section class="controls">
+    <button id="go">Empezar a escuchar</button>
+    <div class="row">
+      <label>Tonalidad de la canción
+        <select id="key"></select>
+      </label>
+      <label>Margen para contar como afinado: <output id="tolOut">±20 cents</output>
+        <input type="range" id="tol" min="5" max="50" step="5" value="20">
+      </label>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div><b id="pct">—</b><span>del tiempo cantado, afinado</span></div>
+    <div><b id="avg">—</b><span>desviación media</span></div>
+    <button class="reset" id="reset">Reiniciar marcador</button>
+  </section>
+
+  <details>
+    <summary>Cómo leerlo</summary>
+    <p>Un semitono son 100 cents. La barra va de −50 a +50: si te sales de ahí, ya estás más cerca de la nota vecina. Verde es dentro del margen, ámbar es «casi», rojo es «eso es otra cosa».</p>
+    <p>Con «Cromático» cuenta como diana la nota más cercana, sea cual sea. Si eliges la tonalidad de la canción, solo valen las notas de esa escala: así una nota fuera de sitio deja de colar como «afinada».</p>
+    <p>Usa auriculares si cantas encima de una pista; si no, el micro también escucha al cantante original y le pone nota a él. Do4 es el Do central.</p>
+  </details>
+</main>
+
+<script>
+(function(){
+  const NAMES=['Do','Do♯','Re','Re♯','Mi','Fa','Fa♯','Sol','Sol♯','La','La♯','Si'];
+  const MAJOR=[0,2,4,5,7,9,11], MINOR=[0,2,3,5,7,8,10];
+  const $=id=>document.getElementById(id);
+  const noteEl=$('note'), needle=$('needle'), zone=$('zone'), statusEl=$('status'), centsEl=$('cents');
+  const go=$('go'), keySel=$('key'), tolIn=$('tol'), tolOut=$('tolOut'), pctEl=$('pct'), avgEl=$('avg');
+  const canvas=$('roll'), g=canvas.getContext('2d');
+
+  // ---- tonalidades
+  const opts=[['chrom','Cromático (cualquier nota)']];
+  for(let i=0;i<12;i++) opts.push(['maj-'+i, NAMES[i]+' mayor']);
+  for(let i=0;i<12;i++) opts.push(['min-'+i, NAMES[i]+' menor']);
+  for(const [v,l] of opts){const o=document.createElement('option');o.value=v;o.textContent=l;keySel.appendChild(o);}
+  try{ const k=localStorage.getItem('afino-key'); if(k) keySel.value=k;
+       const t=localStorage.getItem('afino-tol'); if(t) tolIn.value=t; }catch(e){}
+  let scale=null;
+  function readKey(){
+    const v=keySel.value;
+    if(v==='chrom'){scale=null;return;}
+    const [type,root]=v.split('-'); const r=+root;
+    scale=new Set((type==='maj'?MAJOR:MINOR).map(s=>(s+r)%12));
+  }
+  function readTol(){ tolOut.textContent='±'+tolIn.value+' cents'; zone.style.width=(tolIn.value*2)+'%'; }
+  keySel.addEventListener('change',()=>{readKey();try{localStorage.setItem('afino-key',keySel.value)}catch(e){}});
+  tolIn.addEventListener('input',()=>{readTol();try{localStorage.setItem('afino-tol',tolIn.value)}catch(e){}});
+  readKey(); readTol();
+
+  function inScale(m){ return !scale || scale.has(((m%12)+12)%12); }
+  function targetFor(mf){
+    const r=Math.round(mf);
+    if(!scale) return r;
+    let best=null,bd=1e9;
+    for(let m=r-2;m<=r+2;m++){ if(inScale(m)){const d=Math.abs(m-mf); if(d<bd){bd=d;best=m;}} }
+    return best;
+  }
+  function label(m){ return NAMES[((m%12)+12)%12]+'<sub>'+(Math.floor(m/12)-1)+'</sub>'; }
+
+  // ---- detector de tono (YIN, de Cheveigné & Kawahara 2002)
+  function yin(x,sr){
+    const W=1024, tMin=Math.floor(sr/1100), tMax=Math.min(W-1,Math.floor(sr/65));
+    const d=new Float32Array(tMax+2);
+    for(let t=1;t<=tMax;t++){ let s=0; for(let i=0;i<W;i++){const v=x[i]-x[i+t]; s+=v*v;} d[t]=s; }
+    let run=0; d[0]=1;
+    for(let t=1;t<=tMax;t++){ run+=d[t]; d[t]= run>0 ? d[t]*t/run : 1; }
+    let tau=-1;
+    for(let t=Math.max(2,tMin);t<tMax;t++){
+      if(d[t]<0.15){ while(t+1<tMax && d[t+1]<d[t]) t++; tau=t; break; }
+    }
+    if(tau<0) return null;
+    const a=d[tau-1],b=d[tau],c=d[tau+1], den=a-2*b+c;
+    const shift= den!==0 ? 0.5*(a-c)/den : 0;
+    return {f:sr/(tau+shift), conf:1-b};
+  }
+
+  // ---- frases
+  const LINES={
+    ok:["Afinado. Que no se te suba.","Clavado. Pitágoras asiente desde algún sitio.","En su sitio. Esto es exactamente lo que queríamos.","Afinado. Disfrútalo, que no dura."],
+    nearLow:["Un pelín bajo. Sube un poco, que no muerde.","Rozando por debajo. Casi, casi."],
+    nearHigh:["Un pelín alto. Ambición sí, pero baja un poco.","Rozando por arriba. Casi, casi."],
+    offLow:["Bajo. La nota está un escalón más arriba.","Te has quedado corto. Sube."],
+    offHigh:["Alto. Te has pasado de frenada.","Por encima. Baja un poco el listón."],
+    outKey:["Esa nota no es de la tonalidad. Jazz, quizá.","Nota fuera de la escala. Valiente, eso sí."],
+    silence:["Silencio. Técnicamente, perfecto.","Esperando tu voz…","Aquí no suena nada. Respira, que eso también cuenta."]
+  };
+  let lastKind='', lastChange=0;
+  function say(kind){
+    const now=performance.now();
+    if(kind===lastKind || now-lastChange<900) return;
+    lastKind=kind; lastChange=now;
+    const arr=LINES[kind]; statusEl.textContent=arr[Math.floor(Math.random()*arr.length)];
+  }
+
+  // ---- estado
+  let ctx=null, stream=null, analyser=null, buf=null, running=false, raf=0;
+  const recent=[]; let misses=0;
+  const hist=[]; const WINDOW=8000;
+  let voicedT=0, okT=0, sumAbs=0, nAbs=0, lastFrame=0;
+  let viewC=60;
+
+  function resetStats(){ voicedT=okT=sumAbs=nAbs=0; pctEl.textContent='—'; avgEl.textContent='—'; }
+  $('reset').addEventListener('click',resetStats);
+
+  async function start(){
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    }catch(e){
+      const why = !window.isSecureContext ? 'la página no se abrió por https ni como archivo local'
+        : !navigator.mediaDevices ? 'este visor no expone el micrófono'
+        : e.name==='NotAllowedError' ? 'el permiso está denegado o el visor lo bloquea'
+        : e.name==='NotFoundError' ? 'no se encuentra ningún micrófono'
+        : (e.name||'error desconocido');
+      statusEl.innerHTML='<span class="err">No hay acceso al micrófono ('+why+').</span> Abre este archivo en Chrome o Safari y acepta el permiso.';
+      return;
+    }
+    ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const src=ctx.createMediaStreamSource(stream);
+    analyser=ctx.createAnalyser(); analyser.fftSize=2048;
+    src.connect(analyser);
+    buf=new Float32Array(analyser.fftSize);
+    running=true; lastFrame=performance.now();
+    go.textContent='Parar'; go.classList.add('on');
+    statusEl.textContent='Escuchando. Adelante, nadie más te oye.';
+    loop();
+  }
+  function stop(){
+    running=false; cancelAnimationFrame(raf);
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+    if(ctx) ctx.close();
+    go.textContent='Empezar a escuchar'; go.classList.remove('on');
+    noteEl.className='note idle'; needle.className='needle'; needle.style.left='50%';
+    statusEl.textContent='En pausa. El marcador se queda donde estaba.';
+    lastKind='';
+  }
+  go.addEventListener('click',()=> running?stop():start());
+
+  function median(a){ const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; }
+
+  function loop(){
+    raf=requestAnimationFrame(loop);
+    const now=performance.now(), dt=Math.min(100,now-lastFrame); lastFrame=now;
+    analyser.getFloatTimeDomainData(buf);
+    let rms=0; for(let i=0;i<buf.length;i++) rms+=buf[i]*buf[i]; rms=Math.sqrt(rms/buf.length);
+
+    let m=null;
+    if(rms>0.008){
+      const r=yin(buf,ctx.sampleRate);
+      if(r && r.conf>0.8 && r.f>65 && r.f<1100){
+        recent.push(69+12*Math.log2(r.f/440)); if(recent.length>5) recent.shift();
+        misses=0; m=median(recent);
+      }
+    }
+    if(m===null){ if(++misses>4) recent.length=0; }
+
+    let st=null, tgt=null, cents=0;
+    if(m!==null){
+      tgt=targetFor(m); cents=(m-tgt)*100;
+      const tol=+tolIn.value, a=Math.abs(cents);
+      const outKey=scale && !inScale(Math.round(m));
+      st = a<=tol ? 'ok' : (a<=Math.max(tol*2.5,35) && !outKey ? 'near' : 'off');
+      noteEl.innerHTML=label(tgt); noteEl.className='note '+st;
+      needle.className='needle '+st;
+      needle.style.left=(50+Math.max(-50,Math.min(50,cents))/1)+'%';
+      centsEl.textContent=(cents>0?'+':'')+Math.round(cents)+' cents';
+      if(outKey && st!=='ok') say('outKey');
+      else if(st==='ok') say('ok');
+      else if(st==='near') say(cents<0?'nearLow':'nearHigh');
+      else say(cents<0?'offLow':'offHigh');
+      voicedT+=dt; if(st==='ok') okT+=dt; sumAbs+=Math.min(a,100); nAbs++;
+      pctEl.textContent=Math.round(100*okT/voicedT)+'%';
+      avgEl.textContent=Math.round(sumAbs/nAbs)+' cents';
+      viewC+= (m-viewC)*0.04;
+    } else if(misses>20){
+      noteEl.className='note idle'; needle.className='needle'; say('silence');
+    }
+    hist.push({t:now,m,tgt,st});
+    while(hist.length && now-hist[0].t>WINDOW) hist.shift();
+    draw(now);
+  }
+
+  // ---- dibujo
+  function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function fit(){
+    const dpr=window.devicePixelRatio||1, w=canvas.clientWidth, h=canvas.clientHeight;
+    canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr);
+    g.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize',()=>{fit(); if(!running) draw(performance.now());});
+
+  function draw(now){
+    const w=canvas.clientWidth, h=canvas.clientHeight;
+    const C={lane:css('--lane'),laneIn:css('--lane-in'),line:css('--line'),muted:css('--muted'),
+             ok:css('--ok'),near:css('--near'),off:css('--off'),ink:css('--ink')};
+    const span=12, pps=h/span, left=44;
+    const y=s=>h/2-(s-viewC)*pps;
+    g.clearRect(0,0,w,h);
+    g.fillStyle=C.lane; g.fillRect(0,0,w,h);
+
+    const lo=Math.floor(viewC-span/2)-1, hi=Math.ceil(viewC+span/2)+1;
+    g.font='600 12px "Bricolage Grotesque", system-ui, sans-serif'; g.textBaseline='middle';
+    const last=hist.length?hist[hist.length-1]:null;
+    for(let s=lo;s<=hi;s++){
+      const yy=y(s), pc=((s%12)+12)%12, black=[1,3,6,8,10].includes(pc);
+      const lit = scale ? scale.has(pc) : !black;
+      if(lit){ g.fillStyle=C.laneIn; g.fillRect(0,yy-pps/2+1,w,pps-2); }
+      if(last && last.tgt===s && last.st){ g.globalAlpha=.18; g.fillStyle=C[last.st]; g.fillRect(0,yy-pps/2+1,w,pps-2); g.globalAlpha=1; }
+      g.fillStyle= lit?C.ink:C.muted; g.globalAlpha= lit?.75:.45;
+      g.fillText(NAMES[pc]+(Math.floor(s/12)-1),8,yy); g.globalAlpha=1;
+    }
+
+    g.lineCap='round'; g.lineWidth=4;
+    const X=t=>w-((now-t)/WINDOW)*(w-left);
+    for(let i=1;i<hist.length;i++){
+      const a=hist[i-1], b=hist[i];
+      if(a.m===null||b.m===null) continue;
+      g.strokeStyle=C[b.st]; g.beginPath(); g.moveTo(X(a.t),y(a.m)); g.lineTo(X(b.t),y(b.m)); g.stroke();
+    }
+    if(last && last.m!==null){
+      g.fillStyle=C[last.st]; g.beginPath(); g.arc(w-6,y(last.m),7,0,Math.PI*2); g.fill();
+    }
+    if(!running && !hist.length){
+      g.fillStyle=C.muted; g.textAlign='center';
+      g.font='16px "Bricolage Grotesque", system-ui, sans-serif';
+      g.fillText('Aquí se dibujará tu voz',w/2+left/2,h/2); g.textAlign='left';
+    }
+  }
+  fit(); draw(performance.now());
+  if(document.fonts) document.fonts.ready.then(()=>{ if(!running) draw(performance.now()); });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{ if(!running) draw(performance.now()); });
+})();
+</script>
+</body>
+</html>
