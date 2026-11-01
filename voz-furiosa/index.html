@@ -361,6 +361,12 @@ const E = {
   w:"Es la postura que enseñan Estill y la Complete Vocal Technique (Sadolin) como «cry»: inclina el cartílago tiroides, estira y adelgaza las cuerdas y ayuda a cerrarlas sin subir la laringe. Hace de puente entre cabeza y pecho en la mezcla.",
   x:"Empujar o aguantar el aire para «sonar fuerte». La presión se nota en el abdomen, no en el cuello. Si el cuello se endurece, te duele o se te sube la nuez: menos volumen y para.",
   p:["Gemido en notas cómodas","Abierto a «no»/«nei», cruzando poco a poco","Gemido llevado a una frase corta de canción"]},
+ afila:{n:"Afila el sonido pequeño",c:"Registros",m:5,
+  s:["Parte del «sonido A»: la nota aguda cómoda, ligera y sin peso, como de coro. Si cuesta, empieza una cuarta más grave.","Pasa a una «ñññ» con la lengua pegada al paladar, sin presionar. La contrapresión ayuda a cerrar las cuerdas sin apretar el cuello.","Abre a «ÑEEE» burlón, de bruja de cuento. Debe ganar brillo, no volumen: por dentro es un alfiler, por fuera suena presente. Luego «nei» y «no»."],
+  t:"Si al hacerlo pequeño se rompe la voz o te aprietas la garganta, no engordes el sonido: afila el que ya es fácil. Es la regla de oro de este ejercicio.",
+  w:"Para vibrar rápido, las cuerdas deben vibrar con poca masa, y con poca masa hace falta poca presión de aire por debajo. Con menos presión no se dispara la musculatura del cuello. El brillo del twang hace que ese sonido pequeño se oiga grande desde fuera.",
+  x:"Quedarte en la «voz fea» como destino. Es un andamio: úsalo 1–2 minutos, a volumen bajo, y relájalo hacia un sonido pop natural. Si duele, paras.",
+  p:["«ñññ» → «ÑEEE» en una nota cómoda","«nei» y «no» subiendo de semitono","Palabras reales de una canción"]},
  vocales:{n:"Vocales puras del castellano",c:"Resonancia",m:4,
   s:["Canta a-e-i-o-u sobre una misma nota, sin mover la mandíbula de más.","El castellano tiene solo 5 vocales sin diptongar. Mantenlas limpias.","Pasa de una a otra sin cortar el sonido y nota cómo cambia el brillo."],
   t:"Ventaja de cantar en castellano: las vocales ya vienen limpias. Aprovecha, que a los ingleses les sobran diptongos.",
@@ -481,11 +487,11 @@ const W = [
  ["Voz de cabeza","Ligera pero firme: las cuerdas se estiran.",["cabeza","sirena","esc5"]],
  ["Falsete: el truco dulce","De aireado a sólido. Una de las firmas de Sheeran.",["falsete","cabeza","sirena"]],
  ["Descubrir el passaggio","Localiza dónde cambia tu voz. El gallo es información.",["pass","cry","falsete"]],
- ["Puentes suaves","Cruzar el cambio de registro sin salto.",["pass","trino","pecho"]],
+ ["Puentes suaves","Cruzar el cambio de registro sin salto.",["pass","afila","pecho"]],
  ["Mezcla: primeros pasos","«nay» y «gee»: coordinar pecho y cabeza. El gemido (cry) como puerta de entrada.",["mix","cry","pass"]],
- ["Mezcla ascendente","Arpegios que cruzan el puente.",["mix","arpe","pass"]],
+ ["Mezcla ascendente","Arpegios que cruzan el puente. Encontrar el «clic» puede llevar semanas de prueba y error: es normal.",["mix","afila","pass"]],
  ["Mezcla en frase","Llevar la mezcla a una melodía de verdad.",["mix","pent","frase"]],
- ["Consolidar registros","Pecho, cabeza y mezcla en la misma sesión.",["mix","pecho","cabeza"]],
+ ["Consolidar registros","Pecho, cabeza y mezcla en la misma sesión.",["mix","afila","cabeza"]],
  ["Balance de medio año","Grabación, comparación con la semana 8 y ajuste del plan.",["pass","mix","rec"]],
  ["Vocales y espacio","Cinco vocales puras. Forma del tubo, forma del sonido.",["vocales","dic","esc5"]],
  ["Resonancia de máscara","Sensación de foco adelantado sin nasalidad.",["mascara","hum","vocales"]],
@@ -1037,7 +1043,7 @@ function saveTake(r){
 }
 const EXMODE = {esc5:"scale",escmay:"scale",arpe:"scale",pent:"scale",menor:"scale",bordon:"scale",salt:"scale",
   mdv:"holdself",onset:"holdself",hum:"holdself",falsete:"holdself",cabeza:"holdself",pecho:"holdself",vocales:"holdself",mascara:"holdself",twang:"holdself",cover:"holdself",
-  straw:"free",sirena:"free",gliss:"free",pass:"free",mix:"free",cry:"holdself",frase:"free",vibr:"free",orna:"free",song:"free",dina:"free",rubato:"free"};
+  straw:"free",sirena:"free",gliss:"free",pass:"free",mix:"free",cry:"holdself",afila:"holdself",frase:"free",vibr:"free",orna:"free",song:"free",dina:"free",rubato:"free"};
 function seqFor(scaleKey, dirn){
   const sc=SCALES[scaleKey]; let seq=sc.st.map((s,i)=>({s,i}));
   if(!sc.fixed){ if(dirn==="d") seq=seq.slice().reverse(); else if(dirn==="ud") seq=seq.concat(seq.slice(0,-1).reverse()); }
