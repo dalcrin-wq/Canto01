@@ -355,6 +355,12 @@ const E = {
   w:"La mezcla es una coordinación entre mecanismo de pecho y de cabeza. Las sílabas con «n/ng» elevan la lengua y estabilizan la laringe.",
   x:"Pensar que mezclar es «gritar bonito».",
   p:["5 notas con «nay»","Arpegio con «gee»","Frases de canción en mezcla suave"]},
+ cry:{n:"Gemido (cry) y cierre suave",c:"Registros",m:4,
+  s:["En una nota cómoda por debajo de tu cambio de registro, haz un gemido corto y suave, como un cachorro que se queja: «mmm…» o «ñññ…». Volumen bajo.","Busca que suene conectado, sin aire soplado, y que la nuez no suba: el sonido «cuelga» por detrás del paladar blando. Mantén 3 s.","Ábrelo a «no» o «nei» suave y sube de semitono en semitono mientras sea cómodo. Tope: 2–3 minutos seguidos."],
+  t:"Es el «¡pero mamááá!…» a un tercio de volumen. Si suena precioso, lo estás haciendo mal; si suena a niño quejándose, vas bien.",
+  w:"Es la postura que enseñan Estill y la Complete Vocal Technique (Sadolin) como «cry»: inclina el cartílago tiroides, estira y adelgaza las cuerdas y ayuda a cerrarlas sin subir la laringe. Hace de puente entre cabeza y pecho en la mezcla.",
+  x:"Empujar o aguantar el aire para «sonar fuerte». La presión se nota en el abdomen, no en el cuello. Si el cuello se endurece, te duele o se te sube la nuez: menos volumen y para.",
+  p:["Gemido en notas cómodas","Abierto a «no»/«nei», cruzando poco a poco","Gemido llevado a una frase corta de canción"]},
  vocales:{n:"Vocales puras del castellano",c:"Resonancia",m:4,
   s:["Canta a-e-i-o-u sobre una misma nota, sin mover la mandíbula de más.","El castellano tiene solo 5 vocales sin diptongar. Mantenlas limpias.","Pasa de una a otra sin cortar el sonido y nota cómo cambia el brillo."],
   t:"Ventaja de cantar en castellano: las vocales ya vienen limpias. Aprovecha, que a los ingleses les sobran diptongos.",
@@ -371,7 +377,7 @@ const E = {
   s:["Imita el «¡nyah!» de una bruja de cuento, sin gritar: nariz arrugada, sonido brillante.","Cántalo en una nota media y en una escala de 5 notas.","Reduce el volumen manteniendo el brillo."],
   t:"El twang es brillo sin volumen: da proyección a un cantante de balada sin que tenga que gritar.",
   w:"Estrechar el epiglotis-tubo crea un formante en torno a 2–4 kHz, justo donde el oído es más sensible. Más presencia con menos presión.",
-  x:"Confundir twang con tensión de garganta.",
+  x:"Confundir twang con tensión o con gritar. Se busca brillo a volumen bajo; si sale ronco o te pica la garganta, baja el volumen y para. Es eficiente, no mágico: sigue habiendo trabajo muscular.",
   p:["«nyah» fijo","Escala de 5 notas","Frase de canción con twang suave"]},
  cover:{n:"Abrir y oscurecer",c:"Resonancia",m:4,
   s:["Canta una frase con vocal «a» y brillante, luego la misma con «o» ancha y oscura.","Alterna: brillante-oscuro-brillante.","Escucha cómo cambia el color sin cambiar de nota."],
@@ -474,9 +480,9 @@ const W = [
  ["Voz de pecho con salud","Potencia sin forzar en grave y medio.",["pecho","straw","esc5"]],
  ["Voz de cabeza","Ligera pero firme: las cuerdas se estiran.",["cabeza","sirena","esc5"]],
  ["Falsete: el truco dulce","De aireado a sólido. Una de las firmas de Sheeran.",["falsete","cabeza","sirena"]],
- ["Descubrir el passaggio","Localiza dónde cambia tu voz. El gallo es información.",["pass","sirena","falsete"]],
+ ["Descubrir el passaggio","Localiza dónde cambia tu voz. El gallo es información.",["pass","cry","falsete"]],
  ["Puentes suaves","Cruzar el cambio de registro sin salto.",["pass","trino","pecho"]],
- ["Mezcla: primeros pasos","«nay» y «gee»: coordinar pecho y cabeza.",["mix","pass","gliss"]],
+ ["Mezcla: primeros pasos","«nay» y «gee»: coordinar pecho y cabeza. El gemido (cry) como puerta de entrada.",["mix","cry","pass"]],
  ["Mezcla ascendente","Arpegios que cruzan el puente.",["mix","arpe","pass"]],
  ["Mezcla en frase","Llevar la mezcla a una melodía de verdad.",["mix","pent","frase"]],
  ["Consolidar registros","Pecho, cabeza y mezcla en la misma sesión.",["mix","pecho","cabeza"]],
@@ -491,7 +497,7 @@ const W = [
  ["Tu timbre","Elige tus colores favoritos y tu forma de decir.",["mascara","twang","rec"]],
  ["Dinámica expresiva","Cantar suave es difícil. Cantar suave y afinado, más.",["dina","mdv","frase"]],
  ["Fraseo y respiración","Respirar donde lo pide la letra, no el aire.",["frase","resp","rubato"]],
- ["Bloque Sheeran","Ritmo, falsete suave y palabras rápidas que se entienden. Escucha, por ejemplo, «Thinking Out Loud», «Photograph» o «The A Team».",["falsete","habla","rubato"],"Ed Sheeran"],
+ ["Bloque Sheeran","Ritmo, falsete suave y palabras rápidas que se entienden. Escucha, por ejemplo, «Thinking Out Loud», «Photograph» o «The A Team».",["cry","falsete","habla"],"Ed Sheeran"],
  ["Bloque M-Clan","Rock con garra y calidez, sin estropear la garganta. Escucha, por ejemplo, «Carolina» o «Llamando a la Tierra».",["raspa","pecho","dina"],"M-Clan"],
  ["Bloque Revólver","Cantar contando una historia con naturalidad. Escucha a Revólver con la letra delante y fíjate en cómo dicen.",["habla","frase","dic"],"Revólver"],
  ["Bloque Anís","Balada íntima: suavidad, tiempo y aire. (Nota para Diego: confírmame a qué Anís te refieres y ajusto este bloque.)",["dina","mdv","frase"],"Anís"],
@@ -1031,7 +1037,7 @@ function saveTake(r){
 }
 const EXMODE = {esc5:"scale",escmay:"scale",arpe:"scale",pent:"scale",menor:"scale",bordon:"scale",salt:"scale",
   mdv:"holdself",onset:"holdself",hum:"holdself",falsete:"holdself",cabeza:"holdself",pecho:"holdself",vocales:"holdself",mascara:"holdself",twang:"holdself",cover:"holdself",
-  straw:"free",sirena:"free",gliss:"free",pass:"free",mix:"free",frase:"free",vibr:"free",orna:"free",song:"free",dina:"free",rubato:"free"};
+  straw:"free",sirena:"free",gliss:"free",pass:"free",mix:"free",cry:"holdself",frase:"free",vibr:"free",orna:"free",song:"free",dina:"free",rubato:"free"};
 function seqFor(scaleKey, dirn){
   const sc=SCALES[scaleKey]; let seq=sc.st.map((s,i)=>({s,i}));
   if(!sc.fixed){ if(dirn==="d") seq=seq.slice().reverse(); else if(dirn==="ud") seq=seq.concat(seq.slice(0,-1).reverse()); }
