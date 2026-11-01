@@ -188,6 +188,15 @@ canvas.trace{width:100%;height:210px;display:block;border-radius:var(--r2);backg
 .solf span small{display:block;font-family:var(--body);font-size:11px;font-weight:600;opacity:.8;line-height:1}
 .solf span b{font-weight:900}
 
+/* ── arranque y sesión guiada ── */
+.pbar{height:6px;border-radius:3px;background:var(--p3);overflow:hidden;margin:8px 0 12px}
+.pbar i{display:block;height:100%;background:var(--acc);border-radius:3px}
+.gstep{font-size:18px;line-height:1.4;margin:0 0 12px;padding-left:0;list-style:none;counter-reset:g}
+.gstep li{counter-increment:g;display:flex;gap:12px;margin-bottom:12px}
+.gstep li::before{content:counter(g);flex:0 0 32px;height:32px;border-radius:50%;background:var(--p3);display:grid;place-items:center;font-family:var(--disp);font-weight:900;font-size:18px;color:var(--acc)}
+.gtimer{font-family:var(--disp);font-weight:900;font-size:56px;line-height:1;text-align:center;margin:6px 0}
+.help li{margin-bottom:8px}
+input[type=text]{font:inherit;width:100%;background:var(--p2);color:var(--txt);border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;min-height:44px}
 @media (max-width:420px){.wk{font-size:84px;min-width:60px}.hero h1{font-size:24px}.stats .v{font-size:28px}}
 </style>
 
@@ -521,11 +530,18 @@ function freshState(){
   const t = new Date(); t.setHours(0,0,0,0);
   // El día 1 es el lunes de esta semana (el plan está pensado L→D)
   const dow = (t.getDay()+6)%7;
-  const mon = new Date(t.getTime() - dow*DAY);
-  return { v:1, start: ymd(mon), days:{}, lab:{ cents:0, centsBest:0, centsStreak:0, tries:0, hits:0, ivl:0, ivlStreak:0, ivlTries:0, ivlHits:0, lo:null, hi:null, takes:[] }, ts:Date.now() };
+  const mon = new Date(t.getTime() + (dow>=5 ? (7-dow) : -dow)*DAY);  // sáb/dom: empieza el lunes siguiente
+  return { v:1, start: ymd(mon), days:{}, help:true, lab:{ cents:0, centsBest:0, centsStreak:0, tries:0, hits:0, ivl:0, ivlStreak:0, ivlTries:0, ivlHits:0, lo:null, hi:null, takes:[] }, ts:Date.now() };
+}
+function norm(o){
+  o.lab=o.lab||{}; o.lab.takes=o.lab.takes||[]; o.days=o.days||{};
+  if(o.help===undefined) o.help=true;
+  // Si aún no has hecho ninguna sesión y no has fijado tú el día 1, el plan te espera: arranca esta semana (o el lunes que viene)
+  if(!o.startSet && !Object.values(o.days).some(d=>d&&(d.done||d.rest))) o.start=freshState().start;
+  return o;
 }
 function loadLocal(){
-  try { const r = localStorage.getItem(KEY); if (r){ const o = JSON.parse(r); if (o && o.v===1){ o.lab=o.lab||{}; o.lab.takes=o.lab.takes||[]; return o; } } } catch(e){}
+  try { const r = localStorage.getItem(KEY); if (r){ const o = JSON.parse(r); if (o && o.v===1) return norm(o); } } catch(e){}
   return null;
 }
 function save(){
@@ -544,7 +560,7 @@ async function initCloud(){
     cloud = ref;
     if (snap.exists){
       const d = snap.data();
-      if (d && d.json && d.ts > S.ts){ try { const o = JSON.parse(d.json); if (o && o.v===1){ o.lab=o.lab||{}; o.lab.takes=o.lab.takes||[]; S = o; try{localStorage.setItem(KEY, JSON.stringify(S));}catch(e){} render(); } } catch(e){} }
+      if (d && d.json && d.ts > S.ts){ try { const o = JSON.parse(d.json); if (o && o.v===1){ S = norm(o); try{localStorage.setItem(KEY, JSON.stringify(S));}catch(e){} render(); } } catch(e){} }
       else if (d && d.ts < S.ts) save();
     } else {
       save();
@@ -588,7 +604,7 @@ function buildDay(idx){
   return { idx, w, wi, dow, title, focus, ref, ph, lvl, type:DTYPE[dow], blocks:sorted };
 }
 function blockMins(b){ return b.kind==="lab" ? 4 : E[b.ex].m; }
-function visBlocks(day, sem){ if (sem==="r") return []; return sem==="y" ? day.blocks.filter(b=>b.core) : day.blocks; }
+function visBlocks(day, sem){ if (sem==="r") return []; return (sem==="y"||day.w<=2) ? day.blocks.filter(b=>b.core) : day.blocks; }
 
 /* ═════════ ESTADO DE DÍAS, RACHA, ADHERENCIA ═════════ */
 function D(i){ return S.days[i]; }
@@ -695,7 +711,7 @@ function gauge(prog){
 }
 
 function semaforo(idx){
-  const d = D(idx) || {}; const s = d.sem;
+  const d = D(idx) || {}; const s = d.sem||"g";
   return `<div class="card"><div class="up" style="margin-bottom:8px">¿Cómo llega la voz hoy?</div>
    <div class="sem">
     <button data-a="sem" data-s="g" data-i="${idx}" class="${s==="g"?"on":""}"><b><i class="dot g"></i>Fresca</b><span>Sesión completa</span></button>
@@ -749,6 +765,34 @@ function weekStrip(idx, ti){
     <div class="days">${tiles}</div>
     <div class="legend">${Object.keys(TN).map(k=>`<span class="t-${k}"><b>${k}</b>${TN[k]}</span>`).join("")}</div></div>`;
 }
+function viewGuide(){
+  const g=UI.guide, idx=g.i, day=buildDay(idx), d=S.days[idx]||{}, vb=visBlocks(day,d.sem||"g");
+  if(!vb.length){ UI.guide=null; return viewHoy(); }
+  const pos=Math.min(g.pos,vb.length-1), b=vb[pos], last=pos===vb.length-1;
+  const key=idx+":"+b.id, tk=UI.timer&&UI.timer.key===key;
+  let h=`<div class="top"><div class="brand">SESIÓN <i>GUIADA</i></div><button class="btn ghost" data-a="gexit">Salir</button></div>
+   <div class="card"><div class="up">Bloque ${pos+1} de ${vb.length} · ${DOW[day.dow]}</div>
+   <div class="pbar"><i style="width:${Math.round(100*pos/vb.length)}%"></i></div>`;
+  if(b.kind==="lab"){
+    h+=`<h1 style="font-size:30px;margin-bottom:8px">Oído y escalas</h1><p>Hoy toca un ratito de oído (unos 4 minutos). Se hace en la pestaña Escalas; cuando termines, vuelves aquí.</p>
+     <button class="btn tune" data-a="gotolab" data-l="${b.drill}">Abrir Escalas →</button>`;
+  } else {
+    const e=E[b.ex];
+    h+=`<h1 style="font-size:30px;margin-bottom:4px">${esc(e.n)}</h1><div class="small mut" style="margin-bottom:12px">${esc(e.p[day.lvl])}</div>
+     <ol class="gstep">${e.s.map(x=>`<li><span>${esc(x)}</span></li>`).join("")}</ol>
+     <div class="note"><b>Truco</b>${esc(e.t)}</div>
+     <div class="gtimer timer" data-timer="${key}">${tk?fmtT(UI.timer.left):e.m+":00"}</div>
+     <button class="btn tune" style="width:100%" data-a="timer" data-key="${key}" data-m="${e.m}">${tk?"■ Parar cronómetro":"▶ Cronómetro de "+e.m+" min"}</button>`;
+  }
+  h+=`</div><div class="cta"><button class="btn pri" data-a="gnext">${last?"✓ Hecho · cerrar sesión":"✓ Hecho · siguiente"}</button>
+   <button class="btn ghost" data-a="gskip">${last?"Terminar aquí":"Saltar este bloque"}</button></div>`;
+  return h;
+}
+function closeSession(i){
+  const d=S.days[i]; if(!d) return; d.sem=d.sem||"g"; const day=buildDay(i); const vb=visBlocks(day,d.sem);
+  let m=0; vb.forEach(b=>{ if(d.blocks&&d.blocks[b.id]) m+=blockMins(b); });
+  d.done=true; d.mins=m; d.ts=Date.now(); save();
+}
 function viewHoy(){
   const ti = todayIdx();
   if (UI.view===null) UI.view = Math.min(Math.max(ti,0),363);
@@ -758,7 +802,7 @@ function viewHoy(){
   const date = idxDate(idx);
   const isToday = idx===ti, future = idx>ti;
   const prog = Math.min(1, Math.max(0, (idx+1)/364));
-  const sem = d.sem || (future?null:null);
+  const sem = d.sem || (future?null:"g");
   const vb = sem ? visBlocks(day, sem) : [];
   const sess = vb.reduce((a,b)=>a+blockMins(b),0);
   const n = streak();
@@ -767,6 +811,18 @@ function viewHoy(){
   h += `<div class="card"><div class="hero"><div class="wk num">${day.w}<small>de 52</small></div><div style="min-width:0">
     <span class="chip">${esc(PHASES[day.ph].n)}</span>
     <h1>${esc(day.title)}</h1><div class="small mut">${esc(day.focus)}</div></div></div>${gauge(prog)}</div>`;
+  if (S.help!==false && totals().done<3 && !UI.guide){
+    h += `<details class="card help"><summary style="cursor:pointer;min-height:32px"><b style="font-family:var(--disp);font-size:22px">Cómo funciona (30 s) ▾</b></summary>
+      <ol style="padding-left:20px;margin:0 0 10px">
+       <li><b>Una sesión son 3 bloques:</b> calentar, un ejercicio, enfriar. Las dos primeras semanas dura unos 8 minutos. Sí, 8. Menos que una ducha larga.</li>
+       <li><b>No decides nada:</b> pulsa «Empezar sesión guiada» y la app te lleva bloque a bloque, con cronómetro. Tú pones la boca.</li>
+       <li><b>Lo difícil no es cantar, es empezar.</b> Regla de las dos primeras semanas: si no te apetece, haz solo el calentamiento. Con eso el día cuenta como cumplido.</li>
+       <li><b>Ancla el hábito</b> a algo que ya haces (BJ Fogg lo llama <i>Tiny Habits</i>; Gollwitzer, «intenciones de implementación»). El hábito de entrenar sigue a un disparador, no a la motivación.</li>
+      </ol>
+      <label class="small mut">Mi ancla — «Después de…»</label>
+      <input type="text" data-r="anchor" maxlength="80" placeholder="el café de la mañana / ducharme / volver de guardia" value="${esc(S.anchor||"")}" aria-label="Mi ancla">
+      <div class="row" style="margin-top:10px"><button class="btn ghost" data-a="hidehelp">Entendido, ocultar</button></div></details>`;
+  }
   h += weekStrip(idx, ti);
   h += `<div class="up" style="margin:2px 0 10px">${DOW[day.dow]} ${date.getDate()} · ${esc(day.type)}${isToday?" · hoy":""}</div>`;
   if (idx>363){ return h; }
@@ -779,6 +835,7 @@ function viewHoy(){
   } else if (future){
     h += `<div class="note"><b>Vista previa</b>Este día aún no toca. Puedes verlo, pero no cerrarlo.</div>`;
   }
+  if (S.anchor && isToday && !d.done && !d.rest) h += `<div class="note t"><b>Tu ancla</b>Después de ${esc(S.anchor)}.</div>`;
   if (!d.done && !d.rest && !future){ h += semaforo(idx); }
   if (future){ h += `<div class="up" style="margin:4px 0 8px">Sesión prevista · ${day.blocks.reduce((a,b)=>a+blockMins(b),0)} min</div>`; day.blocks.forEach(b=>{ h += blockHTMLpreview(day,b); }); }
   else if (!d.done && !d.rest){
@@ -788,7 +845,9 @@ function viewHoy(){
         <div class="note w"><b>Aviso</b>Si la ronquera o el dolor duran más de 2 semanas, o hay dolor al hablar, ve al médico (otorrino o foniatra). Esta app no sustituye a un profesional.</div>
         <button class="btn pri" data-a="rest" data-i="${idx}">Guardar descanso (cuenta para la racha)</button></div>`;
     } else if (sem){
-      h += `<div class="up" style="margin:4px 0 8px">${sem==="y"?"Versión corta":"Sesión completa"} · ${sess} min</div>`;
+      h += `<div class="up" style="margin:4px 0 8px">${(sem==="y"||day.w<=2)?"Versión corta":"Sesión completa"} · ${sess} min</div>`;
+      if (day.w<=2 && sem==="g") h += `<div class="note"><b>Semanas 1 y 2</b>Versión corta a propósito: primero se construye la constancia, después el volumen.</div>`;
+      h += `<button class="btn pri" style="width:100%;margin-bottom:10px" data-a="gstart" data-i="${idx}">▶ Empezar sesión guiada</button>`;
       vb.forEach(b=>{ h += blockHTML(day,b,d); });
       const nDone = vb.filter(b=>d.blocks&&d.blocks[b.id]).length;
       h += `<div class="cta"><button class="btn pri" data-a="close" data-i="${idx}" ${nDone?"":"disabled"}>Cerrar sesión ${nDone}/${vb.length}</button>
@@ -1236,13 +1295,13 @@ function viewProg(){
   h+=`<div class="card flat"><div class="up">Ajustes</div><p class="small mut" style="margin:6px 0">Día 1 del plan (un lunes, para que el plan cuadre con la semana):</p>
    <input type="date" value="${esc(S.start)}" data-r="start" aria-label="Fecha de inicio">
    <p class="tiny mut" style="margin:10px 0 6px">Tus datos se guardan en este navegador${cloud?" y en tu cuenta":""}.</p>
-   <button class="btn ghost" data-a="reset">${UI.confirmReset?"Pulsa otra vez para borrar todo":"Borrar progreso"}</button></div>`;
+   <button class="btn ghost" data-a="showhelp" style="margin-right:8px">Ver guía de inicio</button><button class="btn ghost" data-a="reset">${UI.confirmReset?"Pulsa otra vez para borrar todo":"Borrar progreso"}</button></div>`;
   return h;
 }
 
 /* ═════════ RENDER ═════════ */
 function render(){
-  const v = {hoy:viewHoy, plan:viewPlan, oido:viewLab, tec:viewLib, prog:viewProg}[UI.tab]();
+  const v = (UI.tab==="hoy"&&UI.guide ? viewGuide : {hoy:viewHoy, plan:viewPlan, oido:viewLab, tec:viewLib, prog:viewProg}[UI.tab])();
   $("#app").innerHTML = v;
   const tabs=[["hoy","🎤","Hoy"],["plan","🗓","Plan"],["oido","🎼","Escalas"],["tec","📚","Técnicas"],["prog","🔥","Progreso"]];
   $("#tabs").innerHTML = `<div class="in">${tabs.map(([k,i,n])=>`<button data-a="tab" data-t="${k}" class="${UI.tab===k?"on":""}"><span class="ic">${i}</span>${n}</button>`).join("")}</div>`;
@@ -1293,7 +1352,7 @@ function act(a, el){
   const ds = el.dataset;
   if(UI.mic.phase==="rec" && ["tab","pickday","wk","week","day","lab","gotoscale"].includes(a)) micStop();
   switch(a){
-    case "tab": stopScale(); droneOff(); UI.withDrone=false; UI.tab=ds.t; if(ds.t==="hoy") UI.view=Math.min(Math.max(todayIdx(),0),363); render(); window.scrollTo(0,0); break;
+    case "tab": UI.guide=null; stopScale(); droneOff(); UI.withDrone=false; UI.tab=ds.t; if(ds.t==="hoy") UI.view=Math.min(Math.max(todayIdx(),0),363); render(); window.scrollTo(0,0); break;
     case "day": UI.view=Math.min(363,Math.max(0,(UI.view||0)+ +ds.d)); stopTimer(); render(); window.scrollTo(0,0); break;
     case "week": UI.view=(+ds.w)*7; UI.tab="hoy"; render(); window.scrollTo(0,0); break;
     case "sem": setSem(+ds.i, ds.s); break;
@@ -1303,13 +1362,13 @@ function act(a, el){
       d.blocks[b]=!d.blocks[b]; save(); render(); break; }
     case "close": {
       const i=+ds.i; const d=S.days[i]; if(!d) break; const day=buildDay(i);
-      const vb=visBlocks(day,d.sem); let m=0; vb.forEach(b=>{ if(d.blocks[b.id]) m+=blockMins(b); });
+      d.sem=d.sem||"g"; const vb=visBlocks(day,d.sem); let m=0; vb.forEach(b=>{ if(d.blocks[b.id]) m+=blockMins(b); });
       d.done=true; d.mins=m; d.ts=Date.now(); save(); render();
       toast(pick(FUNNY_DONE,i)+" Racha: "+streak()+"."); window.scrollTo(0,0); break; }
     case "rest": { const i=+ds.i; const d=S.days[i]||(S.days[i]={blocks:{}}); d.rest=true; d.sem="r"; save(); render(); toast(pick(FUNNY_REST,i)); break; }
     case "reopen": { const i=+ds.i; const d=S.days[i]; if(d){ d.done=false; d.rest=false; } save(); render(); break; }
     case "timer": if(UI.timer&&UI.timer.key===ds.key) stopTimer(); else startTimer(ds.key,+ds.m); render(); break;
-    case "gotolab": UI.tab="oido"; UI.lab=ds.l; render(); window.scrollTo(0,0); break;
+    case "gotolab": UI.guide=null; UI.tab="oido"; UI.lab=ds.l; render(); window.scrollTo(0,0); break;
     case "lab": stopScale(); droneOff(); UI.withDrone=false; UI.lab=ds.l; UI.res.tab=null; render(); break;
     case "nudge": UI.note=Math.min(84,Math.max(36,UI.note+ +ds.n)); render(); playNote(); break;
     case "play": playNote(); break;
@@ -1337,6 +1396,17 @@ function act(a, el){
     case "roottone": tone(mf(UI.root),0,1.4); break;
     case "micstop": micStop(); break;
     case "resclear": delete UI.res[ds.k]; render(); break;
+    case "hidehelp": S.help=false; save(); render(); break;
+    case "showhelp": S.help=true; save(); UI.tab="hoy"; render(); window.scrollTo(0,0); break;
+    case "gstart": { const i=+ds.i; const d=S.days[i]||(S.days[i]={blocks:{}}); d.blocks=d.blocks||{}; d.sem=d.sem||"g"; save(); UI.guide={i,pos:0}; render(); window.scrollTo(0,0); break; }
+    case "gexit": stopTimer(); UI.guide=null; render(); break;
+    case "gnext": case "gskip": {
+      const g=UI.guide; if(!g) break; const day=buildDay(g.i), d=S.days[g.i], vb=visBlocks(day,d.sem||"g"), b=vb[Math.min(g.pos,vb.length-1)], last=g.pos>=vb.length-1;
+      stopTimer(); if(a==="gnext"&&b){ d.blocks[b.id]=true; save(); }
+      if(!last){ g.pos++; render(); window.scrollTo(0,0); break; }
+      UI.guide=null;
+      if(Object.values(d.blocks).some(Boolean)){ closeSession(g.i); toast(pick(FUNNY_DONE,g.i)+" Racha: "+streak()+"."); }
+      render(); window.scrollTo(0,0); break; }
     case "cat": UI.cat=ds.c; render(); break;
     case "reset":
       if(!UI.confirmReset){ UI.confirmReset=true; render(); setTimeout(()=>{UI.confirmReset=false; if(UI.tab==="prog") render();},5000); }
@@ -1368,7 +1438,8 @@ document.addEventListener("change", e=>{
   if (r==="scale"){ UI.scale=v; stopScale(); UI.res.tab=null; render(); }
   if (r==="dirn"){ UI.dirn=v; stopScale(); render(); }
   if (r==="file"){ const fl=e.target.files&&e.target.files[0], k=e.target.dataset.k; e.target.value=""; fromFile(fl,k); }
-  if (r==="start" && v){ S.start=v; save(); UI.view=null; render(); }
+  if (r==="anchor"){ S.anchor=v.slice(0,80); save(); }
+  if (r==="start" && v){ S.start=v; S.startSet=true; save(); UI.view=null; render(); }
 });
 
 /* ═════════ ARRANQUE ═════════ */
