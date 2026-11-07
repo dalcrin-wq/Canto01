@@ -1,14 +1,14 @@
 {
   "name": "Voz Furiosa",
   "short_name": "Voz Furiosa",
-  "description": "Programa de canto de 52 semanas con feedback de afinación.",
+  "description": "Programa de canto de 52 semanas, guiado paso a paso.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#14101a",
-  "theme_color": "#14101a",
+  "background_color": "#120e17",
+  "theme_color": "#120e17",
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
     {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
